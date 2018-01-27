@@ -1,0 +1,234 @@
+const Button = ReactBootstrap.Button;
+const Panel = ReactBootstrap.Panel;
+const Accordion = ReactBootstrap.Accordion;
+const Modal = ReactBootstrap.Modal;
+const FormGroup = ReactBootstrap.FormGroup;
+const FormControl = ReactBootstrap.FormControl;
+const ButtonToolbar = ReactBootstrap.ButtonToolbar;
+const ListGroup = ReactBootstrap.ListGroup;
+const ListGroupItem = ReactBootstrap.ListGroupItem;
+const ControlLabel = ReactBootstrap.ControlLabel;
+
+class Box extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.state = {
+      recipes: [
+        {
+          name: "Pumpkin Pie",
+          ingredients: [
+            "Pumpkin Puree",
+            "Sweetened Condensed Milk",
+            "Eggs",
+            "Pumpkin Pie Spice",
+            "Pie Crust"
+          ]
+        },
+        {
+          name: "Spaghetti",
+          ingredients: ["Noodles", "Tomato Sauce", "Meatballs(Optional)"]
+        },
+        {
+          name: "Pizza",
+          ingredients: [
+            "Pizza base",
+            "Pizza sauce",
+            "Onion",
+            "Capsicum",
+            "Tomato",
+            "BBQ       Chicken",
+            "Cheese (lots of it)",
+            "Oregano",
+            "Chilli Flakes"
+          ]
+        },
+        {
+          name:"Chicken Tikka",
+          ingredients:["Boneless Chicken (Cut in pieces)","Yogurt","Cream","Butter","Garlic Onion Paste","Tomatoes","Red Chilli Powder","Cardamoms","Asafoetida","Kastoori Methi","Coriander Powder"]
+        }
+      ],
+      toggle: false,
+      editNum: 0,
+      fromAdd: false
+    };
+    this.handleDelete = this.handleDelete.bind(this);
+    this.handleEdit = this.handleEdit.bind(this);
+    this.handleSave = this.handleSave.bind(this);
+    this.handleAdd = this.handleAdd.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleCancel = this.handleCancel.bind(this);
+  }
+
+  handleDelete(e) {
+    if (this.state.recipes.length == 1) {
+      alert("Recipe Box cannot be empty !");
+      return;
+    }
+    let recipes = this.state.recipes;
+    recipes.splice(e.target.value, 1);
+    this.setState({
+      recipes,
+      editNum: 0
+    });
+  }
+
+  handleChange(e) {
+    this.setState({
+      value: e.target.value
+    });
+  }
+
+  handleSave(e) {
+   if ($("#recipeHead").val()=="") {
+      alert("Recipe's Name cannot be empty !");
+      return;
+    }
+    var newName = $("#recipeHead").val();
+    var arr = $("#recipeBody").val().split(",");
+     
+    this.state.recipes[this.state.editNum].ingredients = arr;
+    this.state.recipes[this.state.editNum].name = newName;
+    this.setState({
+      toggle: false
+    });
+  }
+
+  handleEdit(e) {
+    this.setState({
+      toggle: true,
+      editNum: e.target.value,
+      fromAdd: false
+    });
+  }
+
+  handleCancel() {
+    if (this.state.fromAdd)
+			this.state.recipes.pop();
+		this.setState({
+			toggle : false,
+			editNum : 0
+		});
+	}
+  
+  componentWillMount() {
+		if (localStorage.getItem('recipeBoxRecipes') && localStorage.getItem('recipeBoxRecipes') !== null)
+			this.setState(JSON.parse(localStorage.getItem('recipeBoxRecipes')));
+	}
+	
+	componentDidUpdate(prevProps,prevState) {
+		localStorage.setItem('recipeBoxRecipes',JSON.stringify(this.state));
+	}
+
+  close = () => {
+    this.setState({
+      toggle: false
+    });
+  };
+
+  open = state => {
+    this.setState({ [state]: true });
+  };
+
+  handleAdd() {
+    this.state.recipes.push({
+      name: "",
+      ingredients: [""]
+    });
+    this.setState({
+      toggle: true,
+      editNum: this.state.recipes.length - 1,
+      fromAdd: true
+    });
+  }
+
+
+
+  render() {
+    const data = this.state.recipes.map((obj, index) => {
+      const list = obj.ingredients.map(item => {
+        return <ListGroupItem className="listgrp" bsStyle="warning">{item}</ListGroupItem>;
+      });
+      return (
+        <Panel
+          className="text-center panelname"
+          bsStyle="warning"
+          header={obj.name}
+          eventKey={index}
+        >
+          <h3 className="text-center">Ingredients</h3>
+          <hr />
+          <ListGroup>{list}</ListGroup>
+          <ButtonToolbar className="butt">
+            <Button bsStyle="danger" onClick={this.handleDelete} value={index}>
+              Delete Recipe &nbsp;
+              <i className="fa fa-trash fa-lg"></i>
+            </Button>
+            <Button bsStyle="warning" onClick={this.handleEdit} value={index}>
+              Edit Recipe &nbsp;
+              <i className="fa fa-pencil-square-o fa-lg"></i>
+            </Button>
+          </ButtonToolbar>
+        </Panel>
+      );
+    });
+    const editData = this.state.recipes[this.state.editNum].ingredients.join(
+      ","
+    );
+    const editName = this.state.recipes[this.state.editNum].name;
+    return (
+      <div>
+        <Accordion className="acc">{data}</Accordion>
+        <Modal show={this.state.toggle} onHide={this.handleCancel}>
+          <Modal>
+            <Modal.Title>Add a New Recipe</Modal.Title>
+          </Modal>
+          <Modal.Body>
+            <FormGroup>
+              <ControlLabel>Recipe's Name</ControlLabel>
+              <FormControl
+                id="recipeHead"
+                type="text"
+                placeholder="Enter name"
+                defaultValue={editName}
+                onChange={this.handleChange}
+              />
+            </FormGroup>
+
+            <br />
+
+            <FormGroup>
+              <ControlLabel>Ingredients</ControlLabel>
+              <FormControl
+                id="recipeBody"
+                componentClass="textarea"
+                rows="6"
+                placeholder="Enter the ingredients separated by a comma(,)"
+              >
+                {editData}
+              </FormControl>
+            </FormGroup>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button bsStyle="success" onClick={this.handleSave}>
+              Save
+            </Button>
+            <Button bsStyle="default" onClick={this.handleCancel}>
+              Cancel
+            </Button>
+          </Modal.Footer>
+        </Modal>
+        <Button
+          bsStyle="primary"
+          bsSize="large"
+          className="add"
+          onClick={this.handleAdd}
+        >
+          Add Recipe
+        </Button>
+      </div>
+    );
+  }
+}
+
+ReactDOM.render(<Box />, document.getElementById("app"));
